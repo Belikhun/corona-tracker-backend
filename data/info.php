@@ -7,11 +7,11 @@
     //? |-----------------------------------------------------------------------------------------------|
 
 	// dont claim it for your own. its not nice
-	define("APPNAME", "Corona status API");
+	define("APPNAME", "Corona Tracker Backend");
 	define("AUTHOR", "Belikhun");
 	define("VERSION", "1.0.0");
 	define("VERSION_TAG", "release");
-	define("REPO_ADDRESS", "");
+	define("REPO_ADDRESS", "https://github.com/belivipro9x99/ncov-data-backend");
 	define("REPORT_ERROR", REPO_ADDRESS . "/issues");
 	define("CONTACT_LINK", "http://m.me/belivipro9x99");
 	define("TRACK_ID", "");
