@@ -32,6 +32,8 @@
 		
 	if ($cache -> validate()) {
 		$returnData = $cache -> getData();
+		
+		header("Access-Control-Allow-Origin: *");
 		stop(0, "Fetched from Cache", 200, $returnData, true);
 	}
 
@@ -131,4 +133,5 @@
 		$cache -> save($data);
 	}
 
+	header("Access-Control-Allow-Origin: *");
 	stop(0, "Request Completed", curl_getinfo($ch, CURLINFO_HTTP_CODE), $data);
