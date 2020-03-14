@@ -36,7 +36,7 @@
 	}
 
 	$url = "https://corona-api.kompa.ai/graphql";
-	$data = '{"operationName":"countries","variables":{},"query":"\nquery countries {\ncountries {\nCountry_Region\nConfirmed\nDeaths\nRecovered\nLast_Update\n__typename\n}\n\nprovinces {\nProvince_Name\nProvince_Id\nConfirmed\nDeaths\nRecovered\nLast_Update\n__typename\n}\n\ntotalConfirmedLast\ntotalDeathsLast\ntotalRecoveredLast\n}\n"}';
+	$postData = '{"operationName":"countries","variables":{},"query":"\nquery countries {\ncountries {\nCountry_Region\nConfirmed\nDeaths\nRecovered\nLast_Update\n__typename\n}\n\nprovinces {\nProvince_Name\nProvince_Id\nConfirmed\nDeaths\nRecovered\nLast_Update\n__typename\n}\n\ntotalConfirmedLast\ntotalDeathsLast\ntotalRecoveredLast\n}\n"}';
 	
 	$header = Array(
 		":authority: corona-api.kompa.ai",
@@ -48,7 +48,7 @@
 		"Accept-Language: vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7",
 		"Cache-Control: no-cache",
 		"Connection: keep-alive",
-		"Content-Length: ". strlen($data),
+		"Content-Length: ". strlen($postData),
 		"content-type: application/json",
 		"Origin: https://corona.kompa.ai",
 		"Pragma: no-cache",
@@ -66,26 +66,41 @@
 	curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 	curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
 
 	$response = curl_exec($ch);
 
 	if ($code = curl_errno($ch))
 		stop($code, "Request Error: ". curl_error($ch), 500);
 
-	$data = json_decode($response, true);
+	$kompaData = json_decode($response, true);
 
-	if ($data["data"]) {
+	// Worldometer Data
+
+	$wom = file_get_contents("https://www.worldometers.info/coronavirus/");
+	$womRe = '/(?:<span>(\d+,\d+)<\/span>|<span style="color:#aaa">(\d+,\d+)(?: |)<\/span>)/m';
+	$womUpdateRe = '/text-align:center">Last updated: (.+)<\/div><div style="margin-top:20px/m';
+	preg_match_all($womRe, $wom, $womMatch, PREG_SET_ORDER, 0);
+	preg_match_all($womUpdateRe, $wom, $womUpdateMatch, PREG_SET_ORDER, 0);
+
+	$womData = Array(
+		"confirmed" => (int)str_replace(",", "", trim($womMatch[0][2])),
+		"deaths" => (int)str_replace(",", "", trim($womMatch[1][1])),
+		"recovered" => (int)str_replace(",", "", trim($womMatch[2][1])),
+		"update" => (int)str_replace(",", "", strtotime(trim($womUpdateMatch[0][1])))
+	);
+
+	if ($kompaData["data"]) {
 		$global = $default["global"];
 		$vietnam = $default["vietnam"];
 
 		// GLOBAL DATA
 
-		$global["last"]["confirmed"] += (int)$data["data"]["totalConfirmedLast"];
-		$global["last"]["deaths"] += (int)$data["data"]["totalDeathsLast"];
-		$global["last"]["recovered"] += (int)$data["data"]["totalRecoveredLast"];
+		$global["last"]["confirmed"] = (int)$kompaData["data"]["totalConfirmedLast"];
+		$global["last"]["deaths"] = (int)$kompaData["data"]["totalDeathsLast"];
+		$global["last"]["recovered"] = (int)$kompaData["data"]["totalRecoveredLast"];
 
-		foreach ($data["data"]["countries"] as $value) {
+		foreach ($kompaData["data"]["countries"] as $value) {
 			$global["confirmed"] += (int)$value["Confirmed"];
 			$global["deaths"] += (int)$value["Deaths"];
 			$global["recovered"] += (int)$value["Recovered"];
@@ -95,9 +110,14 @@
 				$global["update"] = $lu;
 		}
 
+		$global["confirmed"] = max($global["confirmed"], $womData["confirmed"]);
+		$global["deaths"] = max($global["deaths"], $womData["deaths"]);
+		$global["recovered"] = max($global["recovered"], $womData["recovered"]);
+		$global["update"] = max($global["update"], $womData["update"]);
+
 		// VIETNAM DATA
 
-		foreach ($data["data"]["provinces"] as $value) {
+		foreach ($kompaData["data"]["provinces"] as $value) {
 			$vietnam["confirmed"] += (int)$value["Confirmed"];
 			$vietnam["deaths"] += (int)$value["Deaths"];
 			$vietnam["recovered"] += (int)$value["Recovered"];
@@ -127,8 +147,8 @@
 			return ($a > $b) ? -1 : 1;
 		});
 
-		$data = Array( "global" => $global, "vietnam" => $vietnam );
-		$cache -> save($data);
+		$kompaData = Array( "global" => $global, "vietnam" => $vietnam );
+		$cache -> save($kompaData);
 	}
 
-	stop(0, "Request Completed", curl_getinfo($ch, CURLINFO_HTTP_CODE), $data);
+	stop(0, "Request Completed", curl_getinfo($ch, CURLINFO_HTTP_CODE), $kompaData);
