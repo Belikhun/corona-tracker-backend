@@ -78,7 +78,7 @@
 	// Worldometer Data
 
 	$wom = file_get_contents("https://www.worldometers.info/coronavirus/");
-	$womRe = '/(?:<span>(\d+,\d+)<\/span>|<span style="color:#aaa">(\d+,\d+)(?:\s+|)<\/span>)/m';
+	$womRe = '/(?:<span>(\d+,\d+)<\/span>|<span style="color:#aaa">(\d+,\d+,\d+|\d+,\d+,\d+,\d+)(?:\s+|)<\/span>)/m';
 	$womUpdateRe = '/text-align:center">Last updated: (.+)<\/div>/m';
 	preg_match_all($womRe, $wom, $womMatch, PREG_SET_ORDER, 0);
 	preg_match_all($womUpdateRe, $wom, $womUpdateMatch, PREG_SET_ORDER, 0);
