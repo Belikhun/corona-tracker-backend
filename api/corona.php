@@ -36,7 +36,7 @@
 	}
 
 	$url = "https://corona-api.kompa.ai/graphql";
-	$postData = '{"operationName":"countries","variables":{},"query":"\nquery countries {\ncountries {\nCountry_Region\nConfirmed\nDeaths\nRecovered\nLast_Update\n__typename\n}\n\nprovinces {\nProvince_Name\nProvince_Id\nConfirmed\nDeaths\nRecovered\nLast_Update\n__typename\n}\n\ntotalConfirmedLast\ntotalDeathsLast\ntotalRecoveredLast\n}\n"}';
+	$postData = '{"operationName":null,"variables":{},"query":"{\ncountries {\nCountry_Region\nConfirmed\nDeaths\nRecovered\nLast_Update\n}\nprovinces {\nProvince_Name\nProvince_Id\nConfirmed\nDeaths\nRecovered\nLast_Update\n}\ntotalConfirmedLast\ntotalDeathsLast\ntotalRecoveredLast\ntotalVietNam {\nconfirmed\ndeaths\nrecovered\n}\n}"}';
 	
 	$header = Array(
 		":authority: corona-api.kompa.ai",
@@ -116,11 +116,11 @@
 		$global["update"] = max($global["update"], $womData["update"]);
 
 		// VIETNAM DATA
+		$vietnam["confirmed"] = (int)$kompaData["data"]["totalVietNam"]["confirmed"];
+		$vietnam["deaths"] = (int)$kompaData["data"]["totalVietNam"]["deaths"];
+		$vietnam["recovered"] = (int)$kompaData["data"]["totalVietNam"]["recovered"];
 
 		foreach ($kompaData["data"]["provinces"] as $value) {
-			$vietnam["confirmed"] += (int)$value["Confirmed"];
-			$vietnam["deaths"] += (int)$value["Deaths"];
-			$vietnam["recovered"] += (int)$value["Recovered"];
 			$lu = ((int)$value["Last_Update"]) / 1000;
 
 			if ($lu > $vietnam["update"])
