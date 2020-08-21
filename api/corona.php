@@ -116,9 +116,9 @@
 		$global["update"] = max($global["update"], $womData["update"]);
 
 		// VIETNAM DATA
-		$vietnam["confirmed"] = (int)$kompaData["data"]["totalVietNam"]["confirmed"];
-		$vietnam["deaths"] = (int)$kompaData["data"]["totalVietNam"]["deaths"];
-		$vietnam["recovered"] = (int)$kompaData["data"]["totalVietNam"]["recovered"];
+		$vietnam["confirmed"] = (int)str_replace(".", "", $kompaData["data"]["totalVietNam"]["confirmed"]);
+		$vietnam["deaths"] = (int)str_replace(".", "", $kompaData["data"]["totalVietNam"]["deaths"]);
+		$vietnam["recovered"] = (int)str_replace(".", "", $kompaData["data"]["totalVietNam"]["recovered"]);
 
 		foreach ($kompaData["data"]["provinces"] as $value) {
 			$lu = ((int)$value["Last_Update"]) / 1000;
